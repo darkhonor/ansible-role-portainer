@@ -1,0 +1,32 @@
+---
+# tasks file for ansible-role-portainer
+- name: Create Storage Volume 
+  ansible.builtin.file:
+    path: '{{ item }}'
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+  with_items:
+    - "{{ portainer_volume_directory }}"
+    - "{{ portainer_volume_directory }}/data"
+
+- name: Install Portainer Container
+  community.docker.docker_container:
+    name: portainer
+    image: "portainer/portainer-ee:{{ portainer_version }}"
+    published_ports:
+      - "{{ portainer_tunnel_port }}:8000/tcp"
+      - "{{ portainer_ui_port }}:9443/tcp"
+    # env:
+    #   VIRTUAL_HOST: "{{ inventory_hostname }}.{{ dns_domain }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "{{ portainer_volume_directory }}/data:/data:rw"
+    restart_policy: unless-stopped
+    # healthcheck:
+    #   test: ["CMD", "curl", "--fail", "http://localhost:{{ pihole_web_port }}"]
+    #   interval: 5m
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
