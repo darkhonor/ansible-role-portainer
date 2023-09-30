@@ -11,6 +11,36 @@
     - "{{ portainer_volume_directory }}"
     - "{{ portainer_volume_directory }}/data"
 
+- name: Ensure UFW is installed
+  ansible.builtin.apt:
+    name:
+      - ufw
+    state: present
+  when:
+    - enable_ufw
+
+- name: Open Portainer UI Port on the Firewall
+  community.general.ufw:
+    rule: allow
+    port: '{{ portainer_ui_port }}'
+    proto: tcp
+    src: '{{ item }}'
+    comment: Allow Portainer UI from Private Networks
+  loop: '{{ valid_sources }}'
+  when:
+    - enable_ufw
+
+- name: Open Portainer Tunnel Port on the Firewall
+  community.general.ufw:
+    rule: allow
+    port: '{{ portainer_tunnel_port }}'
+    proto: tcp
+    src: '{{ item }}'
+    comment: Allow Portainer Tunnel from Private Networks
+  loop: '{{ valid_sources }}'
+  when:
+    - enable_ufw
+
 - name: Install Portainer Container
   community.docker.docker_container:
     name: portainer
